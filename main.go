@@ -50,5 +50,13 @@ func main() {
 		context.JSON(http.StatusOK, gin.H{"events": stream})
 	})
 
+	router.GET("/:user/artist_counts", func(context *gin.Context) {
+		user := context.Param("user")
+		handler := handlers.BuildFetchArtistCounts(&store)
+
+		counter := handler.FetchArtistCounts(user)
+		context.JSON(http.StatusOK, counter)
+	})
+
 	router.Run()
 }
