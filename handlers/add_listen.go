@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"github.com/rs/xid"
+	"plotsky.dev/bragi/commands"
 	"plotsky.dev/bragi/events"
 	"plotsky.dev/bragi/listens"
 	"plotsky.dev/bragi/projections"
-	"plotsky.dev/bragi/spotify"
 	"plotsky.dev/bragi/stores"
 )
 
@@ -19,27 +19,34 @@ func BuildAddListen(store stores.Store) Handler {
 	}
 }
 
-func (handler Handler) AddListen(listen spotify.Listen) {
-	stored_events, version := handler.store.GetEvents("user-1")
+func (handler Handler) AddListen(command commands.Command) {
+	add_spotify_listen, is_listen := command.Data.(commands.AddSpotifyListen)
+
+	if !is_listen {
+		return
+	}
+
+	spotify_listen := add_spotify_listen.HistoricalListen
+
+	stored_events, version := handler.store.GetEvents(add_spotify_listen.UserId)
 	tracker := projections.BuildListenTracker(stored_events)
-	id := listen.EndTime + "-" + listen.ArtistName + "-" + listen.TrackName
+	id := spotify_listen.EndTime + "-" + spotify_listen.ArtistName + "-" + spotify_listen.TrackName
+	println(id)
 	_, ok := tracker.GetListen(id)
+
+	println(ok)
 
 	if ok {
 		return
 	}
 
-	event := events.Event{
-		ID: xid.New().String(),
-		Data: events.ListenAdded{
-			Listen: listens.Listen{
-				ArtistName: listen.ArtistName,
-				TrackName:  listen.TrackName,
-				EndTime:    listen.EndTime,
-				MsPlayed:   listen.MsPlayed,
-				ID:         id,
-			},
-		},
+	listen_added := events.ListenAdded{
+		Listen: listens.FromSpotifyHistoricalListen(id, spotify_listen),
 	}
-	handler.store.AddEvent("user-1", event, version)
+
+	event := events.Event{
+		ID:   xid.New().String(),
+		Data: listen_added,
+	}
+	handler.store.AddEvent(add_spotify_listen.UserId, event, version)
 }
