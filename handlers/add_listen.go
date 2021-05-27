@@ -9,10 +9,6 @@ import (
 	"plotsky.dev/bragi/stores"
 )
 
-type Handler struct {
-	store stores.Store
-}
-
 func BuildAddListen(store stores.Store) Handler {
 	return Handler{
 		store,
