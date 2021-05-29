@@ -15,7 +15,7 @@ func BuildInMemoryStore() InMemoryStore {
 	return cli
 }
 
-func (store *InMemoryStore) AddEvent(stream_name string, event events.Event, expected_version int) {
+func (store InMemoryStore) AddEvent(stream_name string, event events.Event, expected_version int) {
 	stream, ok := store.streams[stream_name]
 	if ok {
 		store.streams[stream_name] = append(stream, event)
